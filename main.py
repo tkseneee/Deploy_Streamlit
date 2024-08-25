@@ -1,30 +1,34 @@
 import streamlit as st
+from utils import PrepProcesor, columns 
 
-# functions to convert temperature scales
-def celsius_to_fahrenheit(celsius):
-    return celsius * 9/5 + 32
-def fahrenheit_to_celsius(fahrenheit):
-    return (fahrenheit - 32) * 5/9
+import numpy as np
+import pandas as pd
+import pickle
 
-# page config
-st.set_page_config(page_title="Temperature converter",page_icon="🌡️",layout="centered")
+#model = joblib.load('xgbpipe1.joblib')
+model=pickle.load(open('full_pipeline','rb'))
+st.title('Did they survive? :ship:')
+# PassengerId,Pclass,Name,Sex,Age,SibSp,Parch,Ticket,Fare,Cabin,Embarked
+passengerid = st.text_input("Input Passenger ID", '123456') 
+pclass = st.selectbox("Choose class", [1,2,3])
+name  = st.text_input("Input Passenger Name", 'John Smith')
+sex = st.select_slider("Choose sex", ['male','female'])
+age = st.slider("Choose age",0,100)
+sibsp = st.slider("Choose siblings",0,10)
+parch = st.slider("Choose parch",0,2)
+ticket = st.text_input("Input Ticket Number", "12345") 
+fare = st.number_input("Input Fare Price", 0,1000)
+cabin = st.text_input("Input Cabin", "C52") 
+embarked = st.select_slider("Did they Embark?", ['S','C','Q'])
 
-# Sidebar with instructions
-st.sidebar.title("Instructions")
-st.sidebar.write("Welcome to the Temperature Converter App!")
-st.sidebar.write("Select the temperature unit you have, either Celsius or Fahrenheit.")
-st.sidebar.write("Enter the temperature value in the input field.")
-st.sidebar.write("The app will then convert the temperature to the other unit.")
+def predict(): 
+    row = np.array([passengerid,pclass,name,sex,age,sibsp,parch,ticket,fare,cabin,embarked]) 
+    X = pd.DataFrame([row], columns = columns)
+    prediction = model.predict(X)
+    if prediction[0] == 1: 
+        st.success('Passenger Survived :thumbsup:')
+    else: 
+        st.error('Passenger did not Survive :thumbsdown:') 
 
-# main container
-st.markdown("<h2 style='background-color:red;color:white;text-align:center;padding:10px;border-radius:10px;margin-bottom:20px;'>Temperature Converter App</h2>",unsafe_allow_html=True)
-unit = st.radio("Select temperature unit:", ("Celsius", "Fahrenheit"))
-temperature = st.number_input("Enter temperature:",value=0.0,step=0.1)
-if unit == "Celsius":
-    converted_temp = celsius_to_fahrenheit(temperature)
-    if st.button("Convert now"):
-        st.success(f"{temperature:.1f}°C is equal to {converted_temp:.1f}°F")
-else:
-    converted_temp = fahrenheit_to_celsius(temperature)
-    if st.button("Convert now"):
-        st.success(f"{temperature:.1f}°F is equal to {converted_temp:.1f}°C")
+trigger = st.button('Predict', on_click=predict)
+
